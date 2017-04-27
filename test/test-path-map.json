@@ -1,0 +1,6 @@
+{
+  "a.js": "a.hash.js",
+  "b.js": {
+    "path": "b.hash.js"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "posthtml-plugin-rewrite-paths",
+  "version": "1.0.0",
+  "description": "Remaps paths in HTML.",
+  "main": "dist/plugin.js",
+  "scripts": {
+    "prebuild": "tsc",
+    "build": "babel --presets node6 build/src/plugin.js --out-file dist/plugin.js",
+    "clean:modules": "rimraf node_modules",
+    "clean": "rimraf build/* npm-debug.log*",
+    "pretest": "tsc -m commonjs --inlineSourceMap --sourceMap false",
+    "test": "mocha build/test/**/*.spec.js --reporter mocha-reporter-vscode",
+    "watch:test-build": "tsc -m commonjs --inlineSourceMap --sourceMap false -w",
+    "watch:test-run": "mocha build/test/**/*.spec.js --reporter mocha-reporter-vscode -w",
+    "prewatch:test": "run-s pretest",
+    "watch:test": "run-p watch:test-build watch:test-run"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.13",
+    "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-preset-node6": "^11.0.0",
+    "chai": "^3.5.0",
+    "chokidar": "^1.6.1",
+    "mocha": "^3.2.0",
+    "mocha-reporter-vscode": "https://github.com/franklin-ross/mocha-reporter-vscode",
+    "npm-run-all": "^4.0.2",
+    "posthtml": "^0.9.2",
+    "rimraf": "^2.6.1",
+    "ts-node": "^3.0.2",
+    "typescript": "^2.2.2"
+  },
+  "author": "Franklin Ross <fhross@gmail.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
