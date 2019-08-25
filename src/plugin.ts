@@ -47,8 +47,10 @@ class AttributeTransform {
       "^\\s*[/\\\\]?" + //Match either slash at the start.
       pathString
         .replace(/^[/\\]?/, "") //Remove any existing leading slash.
-        .replace(/[/\\]/, "[/\\\\]") //Match either slash inside target.
-        .replace(/([$^*+?.()|{}\[\]])/, "\\$1") + //Escape non-slash regex chars.
+        .replace(/([\[\]])/g, "\\$1") //Escape bracket regex chars.
+        //Match either slash inside target (not followed by bracket).
+        .replace(/[/\\](?![\[\]])/g, "[/\\\\]")
+        .replace(/([$^*+?.()|{}])/g, "\\$1") + //Escape non-slash, non-bracket regex chars.
       "\\s*$";
     return new RegExp(regexStr);
   }

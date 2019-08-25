@@ -26,6 +26,32 @@ describe("posthtml-plugin-rewrite-paths", function() {
       });
   });
 
+  it("should remap script file path with slashes", function() {
+    const options = {
+      search: { "script": ["src"]},
+      pathMap: { "src/js/index.js": "dist/index.hash.js" }
+    };
+    const html = `<body><script src="src/js/index.js"></script></body>`;
+    return posthtml([ plugin(options) ])
+      .process(html)
+      .then(result => {
+        expect(result.html).to.equal(`<body><script src="dist/index.hash.js"></script></body>`);
+      });
+  });
+
+  it("should remap script file path with brackets", function() {
+    const options = {
+      search: { "script": ["src"]},
+      pathMap: { "src/[m]js/index.js": "dist/index.hash.js" }
+    };
+    const html = `<body><script src="src/[m]js/index.js"></script></body>`;
+    return posthtml([ plugin(options) ])
+      .process(html)
+      .then(result => {
+        expect(result.html).to.equal(`<body><script src="dist/index.hash.js"></script></body>`);
+      });
+  });
+
   it(`options.search should default to { "script": ["src"] }`, function() {
     const options = {
       pathMap: { "index.js": "index.hash.js" }
