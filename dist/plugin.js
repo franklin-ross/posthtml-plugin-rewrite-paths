@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.default = remapPaths;
-var AttributeTransform = function () {
+var AttributeTransform = /** @class */function () {
     function AttributeTransform() {
         this._replacers = [];
     }
@@ -31,14 +31,17 @@ var AttributeTransform = function () {
         return this.createPathRegex(path);
     };
     AttributeTransform.prototype.createPathRegex = function (pathString) {
-        var regexStr = "^\\s*[/\\\\]?" + pathString.replace(/^[/\\]?/, "") //Remove any existing leading slash.
-        .replace(/[/\\]/, "[/\\\\]") //Match either slash inside target.
-        .replace(/([$^*+?.()|{}\[\]])/, "\\$1") + "\\s*$";
+        var regexStr = "^\\s*[/\\\\]?" + //Match either slash at the start.
+        pathString.replace(/^[/\\]?/, "") //Remove any existing leading slash.
+        .replace(/([\[\]])/g, "\\$1") //Escape bracket regex chars.
+        //Match either slash inside target (not followed by bracket).
+        .replace(/[/\\](?![\[\]])/g, "[/\\\\]").replace(/([$^*+?.()|{}])/g, "\\$1") + //Escape non-slash, non-bracket regex chars.
+        "\\s*$";
         return new RegExp(regexStr);
     };
     return AttributeTransform;
 }();
-var Remapper = function () {
+var Remapper = /** @class */function () {
     function Remapper(options) {
         this._search = {
             "script": ["src"]
