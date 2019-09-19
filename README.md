@@ -18,7 +18,7 @@ After:
 ## Install
 
 ```sh
-npm install --save-dev https://github.com/franklin-ross/posthtml-plugin-rewrite-paths
+npm i -D posthtml-rewrite-paths
 ```
 
 ## Usage
