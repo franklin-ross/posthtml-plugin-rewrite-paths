@@ -2,13 +2,13 @@
 
 *A [PostHTML](https://github.com/posthtml/posthtml) plugin for rewriting paths in html attributes.*
 
-**Install**
+## Install
 
-```
+```sh
 npm install --save-dev https://github.com/franklin-ross/posthtml-plugin-rewrite-paths
 ```
 
-**Programmatic usage**
+## Programmatic usage
 
 ```javascript
 const options = {
@@ -30,7 +30,7 @@ posthtml([ plugin(options) ])
   });
 ```
 
-**Options**
+## Options
 
 ```typescript
 {
