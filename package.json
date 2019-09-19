@@ -1,6 +1,6 @@
 {
   "name": "posthtml-rewrite-paths",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Rewrites paths in HTML attributes.",
   "keywords": [
     "posthtml-plugin",
@@ -37,6 +37,9 @@
     "src"
   ],
   "author": "Franklin Ross <fhross@gmail.com>",
+  "contributors": [
+    "John Ericson (https://github.com/pinkhominid)"
+  ],
   "license": "ISC",
   "repository": {
     "type": "git",
