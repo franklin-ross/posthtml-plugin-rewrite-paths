@@ -2,10 +2,21 @@
   "name": "posthtml-rewrite-paths",
   "version": "1.0.0",
   "description": "Rewrites paths in HTML attributes.",
-  "main": "dist/plugin.js",
+  "keywords": [
+    "posthtml-plugin",
+    "rewrite",
+    "replace",
+    "path",
+    "uri",
+    "url",
+    "attribute"
+  ],
+  "main": "dist/plugin.min.js",
+  "typings": "dist/plugin.d.ts",
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist/* npm-debug.log*",
+    "prepublishOnly": "uglifyjs dist/plugin.js -o dist/plugin.min.js -c -m",
     "test": "mocha"
   },
   "devDependencies": {
@@ -17,12 +28,18 @@
     "posthtml": "^0.11.6",
     "rimraf": "^3.0.0",
     "ts-node": "^8.4.1",
-    "typescript": "^3.6.3"
+    "typescript": "^3.6.3",
+    "uglify-es": "^3.3.9"
   },
+  "files": [
+    "dist/plugin.js",
+    "dist/plugin.d.ts",
+    "src"
+  ],
   "author": "Franklin Ross <fhross@gmail.com>",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/franklin-ross/posthtml-plugin-rewrite-paths"
   }
 }
