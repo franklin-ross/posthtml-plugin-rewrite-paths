@@ -17,9 +17,9 @@
         "name": "Current Mocha File",
         "type": "node",
         "request": "launch",
-        "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-        "args": ["${file}", "--reporter", "mocha-reporter"],
-        "cwd": "${workspaceRoot}",
+        "program": "${workspaceFolder}/node_modules/mocha/bin/mocha",
+        "args": [ "${file}" ],
+        "cwd": "${workspaceFolder}",
         "protocol": "inspector",
         "sourceMaps": true
     },

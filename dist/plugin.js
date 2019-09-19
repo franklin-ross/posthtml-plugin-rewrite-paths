@@ -1,77 +1,70 @@
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = remapPaths;
-var AttributeTransform = /** @class */function () {
-    function AttributeTransform() {
-        this._replacers = [];
-    }
-    AttributeTransform.prototype.process = function (node, attrName) {
-        var attrValue = node.attrs[attrName];
-        var matcher = this._replacers.find(function (match) {
-            return match.test(attrValue);
-        });
-        if (matcher) {
-            if (matcher.replace == null) {
-                delete node.attrs[attrName];
-            } else {
-                node.attrs[attrName] = matcher.replace;
+Object.defineProperty(exports, "__esModule", { value: true });
+const fs_1 = require("fs");
+/** Default value for the search option. */
+const searchDefault = {
+    "script": ["src"]
+};
+/** Converts a path string into a regular expression which matches that path with some looseness
+ * around slashes and whitespace. */
+function createPathRewriter(fromPath, toPath) {
+    const normalisedPathString = fromPath
+        // Remove any existing leading slash.
+        .replace(/^[/\\]/, "")
+        // Escape existing bracket regex chars. Actual character sets will be added soon, so brackets
+        // in the original string need to be escaped first.
+        .replace(/[\[\]]/g, "\\$&")
+        // Convert slashes so they match either forward or backwards, unless they're escaping the
+        // brackets in the previous step.
+        .replace(/[/\\](?![\[\]])/g, "[/\\\\]")
+        // Escape all other characters with special meaning in regular expressions.
+        .replace(/[$^*+?.()|{}]/g, "\\$&");
+    // Ignore leading/trailing whitespace, and allow either slash or no slash at the start.
+    const regexStr = `^\\s*[/\\\\]?` + normalisedPathString + "\\s*$";
+    const regex = new RegExp(regexStr);
+    regex.replace = toPath ? toPath : false;
+    return regex;
+}
+/** Build processor function from a path map. The processor takes a node and an attribute name, and
+ * tests the attribute value against all of the paths in the path map. The first match either
+ * replaces the attribute value, or removes the attribute. */
+function buildProcessor(pathMap) {
+    const rewriters = Object
+        .keys(pathMap)
+        .map(from => createPathRewriter(from, pathMap[from]));
+    return function process(node, attrName) {
+        if (node.attrs) {
+            const attrValue = node.attrs[attrName];
+            if (attrValue) {
+                const rewriter = rewriters.find(function (r) { return r.test(this); }, attrValue);
+                if (rewriter) {
+                    if (rewriter.replace) {
+                        node.attrs[attrName] = rewriter.replace;
+                    }
+                    else {
+                        delete node.attrs[attrName];
+                    }
+                }
             }
         }
-        return node;
     };
-    AttributeTransform.prototype.addPathReplacer = function (from, to) {
-        var regex = this.createPathRegex(from);
-        regex.replace = to;
-        this._replacers.push(regex);
-    };
-    AttributeTransform.prototype.addPathRemover = function (path) {
-        return this.createPathRegex(path);
-    };
-    AttributeTransform.prototype.createPathRegex = function (pathString) {
-        var regexStr = "^\\s*[/\\\\]?" + //Match either slash at the start.
-        pathString.replace(/^[/\\]?/, "") //Remove any existing leading slash.
-        .replace(/([\[\]])/g, "\\$1") //Escape bracket regex chars.
-        //Match either slash inside target (not followed by bracket).
-        .replace(/[/\\](?![\[\]])/g, "[/\\\\]").replace(/([$^*+?.()|{}])/g, "\\$1") + //Escape non-slash, non-bracket regex chars.
-        "\\s*$";
-        return new RegExp(regexStr);
-    };
-    return AttributeTransform;
-}();
-var Remapper = /** @class */function () {
-    function Remapper(options) {
-        this._search = {
-            "script": ["src"]
-        };
-        if (options.search) {
-            this._search = options.search;
-        }
-        this._processor = this._getPathMap(options.pathMap).then(function (context) {
-            var processor = new AttributeTransform();
-            for (var _i = 0, _a = Object.keys(context); _i < _a.length; _i++) {
-                var path = _a[_i];
-                processor.addPathReplacer(path, context[path]);
-            }
-            return processor;
-        });
-    }
-    Remapper.prototype._getPathMap = function (pathMap) {
-        var type = typeof pathMap;
-        if (type === "string") {
-            var fs_1 = require("fs");
+}
+/** Converts the path map in the options object into a usable object. */
+function getPathMap(pathMap) {
+    switch (typeof pathMap) {
+        case "string":
             return new Promise(function (resolve, reject) {
-                fs_1.readFile(pathMap, function (err, data) {
+                fs_1.readFile(pathMap, "utf8", function (err, data) {
                     if (err) {
                         reject(err);
-                    } else {
-                        var json = JSON.parse(data);
-                        //If the value is { [key: string]: { path: string } } then remove the indirection.
+                    }
+                    else {
+                        const json = JSON.parse(data);
+                        // If the value is { [key: string]: { path: string } } then remove the indirection.
+                        // I forget which, but that's the shape of the output of one of the tools I was using.
                         for (var key in json) {
-                            var value = json[key];
-                            if (value != null && typeof value !== "string" && typeof value["path"] === "string") {
+                            const value = json[key];
+                            if (typeof value !== "string" && value && typeof value["path"] === "string") {
                                 json[key] = json[key]["path"];
                             }
                         }
@@ -79,25 +72,26 @@ var Remapper = /** @class */function () {
                     }
                 });
             });
-        } else if (type === "object") {
+        case "object":
             return Promise.resolve(pathMap);
-        } else {
+        default:
             return Promise.reject("pathMap option must be a string or object");
-        }
-    };
-    Remapper.prototype.remapTree = function (tree) {
-        var _this = this;
-        return this._processor.then(function (processor) {
-            tree.walk(function (node) {
-                if (node.attrs) {
-                    var searchAttrs = _this._search[node.tag];
+    }
+}
+/** The rewrite-paths plugin for PostHTML. */
+function rewritePathsPlugin(options) {
+    const search = options.search || searchDefault;
+    const processorFuture = getPathMap(options.pathMap).then(buildProcessor);
+    return function (tree) {
+        return processorFuture.then(processor => {
+            tree.walk(node => {
+                if (node.attrs && node.tag) {
+                    const searchAttrs = search[node.tag];
                     if (searchAttrs) {
-                        for (var _i = 0, searchAttrs_1 = searchAttrs; _i < searchAttrs_1.length; _i++) {
-                            var attr = searchAttrs_1[_i];
+                        for (var attr of searchAttrs)
                             if (node.attrs[attr]) {
-                                return processor.process(node, attr);
+                                processor(node, attr);
                             }
-                        }
                     }
                 }
                 return node;
@@ -105,11 +99,6 @@ var Remapper = /** @class */function () {
             return tree;
         });
     };
-    return Remapper;
-}();
-function remapPaths(options) {
-    var remapper = new Remapper(options);
-    return remapper.remapTree.bind(remapper);
 }
+exports.default = rewritePathsPlugin;
 ;
-//# sourceMappingURL=plugin.js.map

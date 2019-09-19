@@ -1,8 +1,12 @@
 import plugin from "../src/plugin";
-import * as path from "path";
 import "mocha";
 import { expect } from "chai";
-import * as posthtml from 'posthtml'
+
+// This little dance seems necessary to get around the bad types in the PostHTML package. The types
+// seem to say PostHTML is a default export, but in reality it's an old `exports = posthtml`.
+import PostHTML from "posthtml";
+import * as _posthtml from "posthtml";
+const posthtml = _posthtml as unknown as typeof PostHTML;
 
 describe("posthtml-plugin-rewrite-paths", function() {
   it("should export default a function", function() {
@@ -39,12 +43,62 @@ describe("posthtml-plugin-rewrite-paths", function() {
       });
   });
 
-  it("should remap script file path with brackets", function() {
+  describe("should replace all matching attributes", function() {
+    const options = {
+      search: { "t": ["a", "b", "c"]},
+      pathMap: { "abc": "xyz" }
+    };
+    const html = `<t a="abc" b="abc" c="abc" d="abc"></t>`;
+    return posthtml([ plugin(options) ])
+      .process(html)
+      .then(result => {
+        expect(result.html).to.equal(`<t a="xyz" b="xyz" c="xyz" d="abc"></t>`);
+      });
+  });
+
+  describe("should be slash agnostic", function() {
+    const from = "a\\b/c";
+    const options = {
+      search: { "t": ["a"]},
+      pathMap: { [from]: "xyz" }
+    };
+    ["a/b/c", "/a/b/c", "a\\b\\c", "\\a\\b\\c"].forEach(function(check: string) {
+      it(`"${from}" should match "${check}"`, function () {
+        return posthtml([ plugin(options) ])
+          .process(`<t a="${check}"></t>`)
+          .then(result => {
+            expect(result.html).to.equal(`<t a="xyz"></t>`);
+          });
+      });
+    });
+  });
+
+  describe("should remap script file path with special character", function() {
+    Array.from("$^*+?.()|{}\[\]").forEach(function(character: string) {
+      it(`allows ${character} in path`, function() {
+        // It's important that a preceding \ doesn't count as an escape character here.
+        const pathMatch = `src\\${character}js/index.js`;
+        const pathReplace = "dist/index.hash.js";
+        const options = {
+          search: { "script": ["src"]},
+          pathMap: { [pathMatch]: pathReplace }
+        };
+        const html = `<body><script src="${pathMatch}"></script></body>`;
+        return posthtml([ plugin(options) ])
+          .process(html)
+          .then(result => {
+            expect(result.html).to.equal(`<body><script src="${pathReplace}"></script></body>`);
+          });
+      });
+    });
+  });
+
+  it("should remap script file path with parens", function() {
     const options = {
       search: { "script": ["src"]},
-      pathMap: { "src/[m]js/index.js": "dist/index.hash.js" }
+      pathMap: { "src/(m)js/index.js": "dist/index.hash.js" }
     };
-    const html = `<body><script src="src/[m]js/index.js"></script></body>`;
+    const html = `<body><script src="src/(m)js/index.js"></script></body>`;
     return posthtml([ plugin(options) ])
       .process(html)
       .then(result => {

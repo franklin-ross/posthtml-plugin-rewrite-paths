@@ -1,26 +1,19 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "module": "es2015",
-    "outDir": "build/",
-    "sourceMap": true,
+    "module": "commonjs",
+    "target": "es6",
+    "declaration": true,
+    "strict": true,
+    "outDir": "dist",
     "alwaysStrict": true,
-    "importHelpers": true,
-    "noEmitHelpers": true,
-    "noImplicitAny": false,
-    "noImplicitThis": true,
-    "removeComments": false,
-    "strictNullChecks": true,
-    "pretty": true,
     "lib": [ "es2015" ]
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "build"
+    "dist"
   ]
 }
