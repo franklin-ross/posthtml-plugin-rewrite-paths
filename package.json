@@ -15,8 +15,10 @@
   "typings": "dist/plugin.d.ts",
   "scripts": {
     "build": "tsc",
+    "postbuild": "uglifyjs dist/plugin.js -o dist/plugin.min.js -c -m",
     "clean": "rimraf dist/* npm-debug.log*",
-    "prepublishOnly": "uglifyjs dist/plugin.js -o dist/plugin.min.js -c -m",
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build",
     "test": "mocha"
   },
   "devDependencies": {
